@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Assistant</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --light-bg: #f4f6f9;
+      --dark-bg: #121212;
+      --light-text: #2c2c2c;
+      --dark-text: #f8f9fa;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-blur: blur(12px);
+      --accent-color: #0d6efd;
+      --border-glow: 1px solid rgba(13, 110, 253, 0.25);
+      --user-color: #d1e7dd;
+      --ai-color: #f8d7da;
+    }
+
+    body {
+      background-color: var(--light-bg);
+      color: var(--light-text);
+      font-family: 'Segoe UI', sans-serif;
+      transition: background-color 0.5s ease, color 0.5s ease;
+    }
+
+    .dark-mode {
+      background-color: var(--dark-bg);
+      color: var(--dark-text);
+    }
+
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: var(--border-glow);
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+      padding: 2rem;
+      transition: all 0.4s ease-in-out;
+    }
+
+    .dark-mode .glass-card {
+      background: rgba(30, 30, 30, 0.4);
+      border-color: rgba(255, 255, 255, 0.1);
+      color: var(--dark-text);
+    }
+
+    .glass-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+    }
+
+    .form-control, .form-select {
+      border-radius: 12px;
+    }
+
+    .btn {
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .chat-bubble {
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 15px;
+      max-width: 80%;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .chat-user {
+      background-color: var(--user-color);
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .chat-ai {
+      background-color: var(--ai-color);
+      align-self: flex-start;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .typing-indicator {
+      width: 70px;
+      height: 20px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+    }
+
+    .typing-indicator span {
+      width: 6px;
+      height: 6px;
+      background: #333;
+      border-radius: 50%;
+      animation: blink 1.4s infinite both;
+    }
+
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0; }
+      40% { opacity: 1; }
+    }
+
+    .result-card {
+      background: #fff;
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .dark-mode .result-card {
+      background-color: #2c2c2c;
+      color: var(--dark-text);
+    }
+  </style>
+</head>
+<body id="body">
+<div class="container my-5">
+  <div class="glass-card" data-aos="fade-up">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="fw-bold mb-0">🤖 AI Assistant</h1>
+      <button class="btn btn-outline-dark" onclick="toggleDarkMode()">🌃 Dark Mode</button>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {% if request.session.model_name %}
+      <div class="alert alert-primary">✅ Model: <strong>{{ request.session.model_name }}</strong></div>
+    {% endif %}
+
+    {% if request.session.file_name %}
+      <div class="alert alert-warning">📄 File: <strong>{{ request.session.file_name }}</strong> is active</div>
+    {% endif %}
+
+    <h4 class="section-title">💬 Chat Interface</h4>
+    {% if history %}
+    <div class="chat-container mb-4">
+      {% for item in history reversed %}
+        <div class="chat-bubble chat-user animate__animated animate__fadeInRight">🧑‍💻 {{ item.question }}</div>
+        <div class="chat-bubble chat-ai animate__animated animate__fadeInLeft">🤖 {{ item.result.final_answer }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <h4 class="section-title">💭 Ask a Question</h4>
+    <form method="post" enctype="multipart/form-data" id="mainForm" class="mb-5">
+      {% csrf_token %}
+      <input type="text" name="input_text" class="form-control mb-3" placeholder="Your question..." required>
+      <input type="file" name="uploaded_file" class="form-control mb-3">
+      <button type="submit" class="btn btn-success w-100">🚀 Ask</button>
+      <div class="text-center my-3" id="spinner" style="display: none;">
+        <div class="typing-indicator">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </form>
+
+    <h4 class="section-title">🔗 RAG URLs (beta)</h4>
+
+    <!-- Form to Add URL -->
+    <form method="post" action="{% url 'add_link' %}" class="input-group mb-3">
+      {% csrf_token %}
+      <input type="url" name="url" class="form-control" placeholder="Paste URL (https://...)" required>
+      <button class="btn btn-outline-info">➕ Add URL</button>
+    </form>
+    
+    <!-- Show if URLs are active -->
+    {% if links %}
+      <div class="alert alert-success d-flex align-items-center mb-3" role="alert">
+        <span class="me-2">✅</span> <strong>RAG is active:</sشtrong> Using the URLs below as sources.
+      </div>
+    
+      <!-- List of URLs -->
+      <ul class="list-group mb-4">
+        {% for link in links %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <small class="text-break">{{ link }}</small>
+            <form method="post" action="{% url 'delete_link' link %}" class="m-0">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger" title="Remove this URL">🗑</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="alert alert-secondary">🔍 No RAG URLs added yet.</div>
+    {% endif %}
+    
+
+    <h4 class="section-title">🛠️ Model Settings</h4>
+    <form method="post" action="{% url 'set_model' %}" class="row g-3 mb-4">
+      {% csrf_token %}
+      <div class="col-md-6">
+        <label class="form-label">Model</label>
+        <select name="model_name" class="form-select" required>
+          <option value="llama3" {% if request.session.model_name == "llama3" %}selected{% endif %}>LLaMA 3 (Groq)</option>
+          <option value="gpt4" {% if request.session.model_name == "gpt4" %}selected{% endif %}>GPT-4 (OpenAI)</option>
+          <option value="mistral" {% if request.session.model_name == "mistral" %}selected{% endif %}>Mistral</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">API Key</label>
+        <div class="input-group">
+          <input type="text" name="api_key" class="form-control" required>
+          <button type="button" class="btn btn-outline-secondary">Test</button>
+        </div>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary w-100">💾 Save</button>
+      </div>
+    </form>
+
+    <h4 class="section-title">📜 Prompt Rules</h4>
+    <form method="post" action="{% url 'add_rule' %}" class="input-group mb-3">
+      {% csrf_token %}
+      <input type="text" name="rule" class="form-control" placeholder="e.g. Always answer in Arabic" required>
+      <button class="btn btn-outline-success">➕ Add</button>
+    </form>
+
+    {% if rules %}
+    <ul class="list-group mb-4">
+      {% for rule in rules %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          {{ rule }}
+          <form method="post" action="{% url 'delete_rule' rule %}">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger">🗑</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="post" action="{% url 'reset_model' %}" class="mb-4">
+      {% csrf_token %}
+      <button class="btn btn-danger w-100">🧹 Reset Everything</button>
+    </form>
+
+      {% if uploaded_files %}
+    <div class="mb-4">
+      <h4 class="section-title">🗂️ Uploaded Files</h4>
+      <ul class="list-group">
+        {% for file in uploaded_files %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ file }}
+            <form method="post" action="{% url 'delete_file' file %}" class="m-0">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete this file">🗑</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+  <h4 class="section-title">📁 Upload File</h4>
+
+    <form method="post" action="{% url 'upload_file_only' %}" enctype="multipart/form-data" class="mb-4">
+      {% csrf_token %}
+      <input type="file" name="uploaded_file" class="form-control mb-2" required>
+      <button class="btn btn-outline-primary w-100">📤 Upload</button>
+    </form>
+
+    {% if result %}
+    <div class="result-card">
+      <div class="card-title text-primary">🔍 Retrieved</div>
+      <pre>{{ result.retrieved_data }}</pre>
+      <div class="card-title text-warning mt-3">📝 Summary</div>
+      <pre>{{ result.summarized_data }}</pre>
+      <div class="card-title text-success mt-3">✅ Answer</div>
+      <pre>{{ result.final_answer }}</pre>
+    </div>
+    {% endif %}
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script>
+  AOS.init();
+  document.getElementById("mainForm").addEventListener("submit", function () {
+    document.getElementById("spinner").style.display = "block";
+  });
+  function toggleDarkMode() {
+    document.getElementById("body").classList.toggle("dark-mode");
+  }
+</script>
+</body>
+</html>
