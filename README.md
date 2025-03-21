@@ -148,17 +148,3 @@ python manage.py runserver
 💼 [LinkedIn](https://www.linkedin.com/in/mostafa-darahem/)  
 📧 mostafasamirdarahem@gmail.com
 🌐 [GitHub](https://github.com/Dara4hem/GenieAI)
-
----
-
-## 📌 Note
-
-This repository was built to fulfill the **AI Engineer Task for Genie**, as outlined in their official email communications.
-
-I extended the basic task into a **production-ready assistant** with extra features for usability and scalability, and I plan to build further on this framework for my own projects.
-
-```
-
----
-
-لو حابب أضيف سكريبت صغير في `README` لتجربة مشروعك بواجهة سطر الأوامر أو ملف `LICENSE` كمان، قولي أظبطهم ليك!
