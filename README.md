@@ -146,5 +146,7 @@ python manage.py runserver
 
 **Mostafa Darahem**  
 💼 [LinkedIn](https://www.linkedin.com/in/mostafa-darahem/)  
+
 📧 mostafasamirdarahem@gmail.com
+
 🌐 [GitHub](https://github.com/Dara4hem/GenieAI)
